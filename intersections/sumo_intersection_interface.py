@@ -48,6 +48,10 @@ class IntersectionControllerInterface():
         self._incoming_queue_size_by_link_index = [0] * self._num_queues  #  The queue length for each index
         self._outgoing_lane_queue_size_by_link_index = [0] * self._num_queues  # The length of outgoing queues by link index
 
+        # Direct data subscription from SUMO
+
+        self._sumo_lanes_subscription = None
+
         # Variables relating to the traffic light stage and duration. Used for controlling TraCI.
 
         self._current_stage_index # Current stage of the traffic light
