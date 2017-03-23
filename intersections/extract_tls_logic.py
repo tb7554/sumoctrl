@@ -37,8 +37,10 @@ class network_tls_logic():
 
         # Conversion to numpy arrays which will be more efficient (some users may prefer this implementation).
         # More likely to lead to mistakes, but also opens up options for using map and reduce.
+        self._tls_ids = self._tls_stages.keys()
         self._tls_stages_as_numpy_matrix = np.matrix([np.matrix(matrix) for matrix in self._tls_stages.values()])
-        self._compatible_phases_as_numpy_matrix = np.matrix([np.matrix(matrix) for matrix in self._compatible_phases.values()])
+        # As key -> val order may differ in the other dictionary, we iter through the self._tls_ids list for the second numpy matrix
+        self._compatible_phases_as_numpy_matrix = np.matrix([np.matrix(self._compatible_phases[tls_id]) for tls_id in self._tls_ids])
 
 
 def stages_as_dict(net_obj, clean_stages=True):
