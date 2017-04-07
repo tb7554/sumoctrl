@@ -434,7 +434,7 @@ if __name__ == "__main__":
 
     traci_port = checkPorts.getOpenPort()
     sumoCommand = (
-    "sumo -n /Users/tb7554/PyCharmProjects/_618_Smallworld_Debug_/Net_XML_Files/Smallworld-10x10-1-Lane-TLS.net"
+    "sumo-gui -n /Users/tb7554/PyCharmProjects/_618_Smallworld_Debug_/Net_XML_Files/Smallworld-10x10-1-Lane-TLS.net"
     ".xml -r /Users/tb7554/PyCharmProjects/_618_Smallworld_Debug_/SUMO_Input_Files/Routes/Smallworld-10x10-1-Lane-TLS-CGR-1.10-PEN-0.00-0.rou.xml --remote-port %d --step-length %.2f --time-to-teleport -1"
     % (traci_port, step_length))
 
