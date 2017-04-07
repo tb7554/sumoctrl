@@ -18,6 +18,7 @@ import tls_logic
 import traci
 from sumolib import net
 from interface import getdata
+from intersections.extract_intersection_topology import IntersectionTopology
 
 from collections import defaultdict, Counter
 
@@ -33,7 +34,6 @@ class CustomCounter:
             del self.count[item]
         except KeyError:
             return None
-
 
 def get_first_cars_in_lane_and_lane_queue(network_intersection_ids, network_intersection_lanes):
 
@@ -341,7 +341,7 @@ if __name__ == "__main__":
 
     end_step = 7200
     step_length = 0.1
-    green_stage_length = 20 # Steps between computing the force driving each traffic light phase
+    green_stage_length = 15 # Steps between computing the force driving each traffic light phase
     amber_stage_length = 4
     counter = green_stage_length # Counters used to track when calculation should be done
 
@@ -350,47 +350,83 @@ if __name__ == "__main__":
     # sumolib net object
     network = net.readNet(net_file, withConnections=True, withPrograms=True)
 
+    intersection_topology_container = IntersectionTopology(net_file)
+
     # List of ids of the tls intersections in the network
     network_tls_ids = network._id2tls.keys()
     # List of ids of all intersections in the network
     network_intersection_ids = network._id2node.keys()
-
     # nxn matrix of compatible phases, and phase strings. returned as dictionaries with intersection_ids as keys
-    tls_comaptible_phase_matrix, tls_stages = tls_logic.get_compatible_lanes_matrix_and_phases_from_net_file(net_file)
+    tls_compatible_phase_matrix, tls_stages = tls_logic.get_compatible_lanes_matrix_and_phases_from_net_file(net_file)
     # translate dicts into lists in order of network_intersection_ids
     # Compatible phases used in the congestion-aware phase calculation
-    network_tls_compatible_phases_matrix = [tls_comaptible_phase_matrix[intersection_id] for intersection_id in network_tls_ids]
+    network_tls_compatible_phases_matrix = [tls_compatible_phase_matrix[intersection_id] for intersection_id in network_tls_ids]
     # tls stage matrix for all tls intersections as list of lists
     network_tls_stage_matrix = [tls_stages[intersection_id] for intersection_id in network_tls_ids]
 
     # dictionary of {intersection_id : [in lanes with index equal to link index]}, and same dictinoary but with out lanes
-    network_tls_in_lanes_to_indicies_dict, network_tls_out_lanes_to_indicies_dict = tls_logic.get_in_out_lanes_to_index(net_file)
+    network_tls_in_lanes_to_indices_dict, network_tls_out_lanes_to_indicies_dict = tls_logic.get_in_out_lanes_to_index(net_file)
+
+    # Get equivalent dicts for the whole network
+    network_intersection_in_lanes_to_indices_dict =  \
+        intersection_topology_container._network_intersection_input_lanes_to_indices_dict
+    network_intersection_out_lanes_to_indices_dict = \
+        intersection_topology_container._network_intersection_output_lanes_to_indices_dict
 
     # convert dictionaries to lists in order of network_intersection_ids
-    network_tls_in_lanes_to_indicies = [network_tls_in_lanes_to_indicies_dict[intersection_id] for intersection_id in network_tls_ids]
-    network_tls_out_lanes_to_indicies = [network_tls_out_lanes_to_indicies_dict[intersection_id] for
-                                         intersection_id in network_tls_ids]
+    network_tls_in_lanes_to_indices = [network_tls_in_lanes_to_indices_dict[intersection_id] for intersection_id in network_tls_ids]
+    network_tls_out_lanes_to_indices = [network_tls_out_lanes_to_indicies_dict[intersection_id] for
+                                        intersection_id in network_tls_ids]
+
+    # Get equivalent lists for the whole network
+    network_intersection_in_lanes_to_indices = intersection_topology_container._network_intersection_input_lanes_to_indices
+    network_intersection_out_lanes_to_indices = \
+        intersection_topology_container._network_intersection_output_lanes_to_indices
 
     # list of lists [[lane for every intersection] for every intersection in the network]
-    network_tls_in_lanes = [[entry for entry in set(network_tls_in_lanes_to_indicies_dict[intersection_id])] for intersection_id in network_tls_ids]
+    network_tls_in_lanes = [[entry
+                             for entry in set(network_tls_in_lanes_to_indices_dict[intersection_id])]
+                            for intersection_id in network_tls_ids]
+
+    network_intersection_in_lanes = [[entry
+                                      for entry in set(network_intersection_in_lanes_to_indices_dict[intersection_id])]
+                                     for intersection_id in network_intersection_ids]
+
 
     # dictionary of {intersection {in_lane: {out_edge : link index}}}
     _, link_index_by_tls_id_in_lane_and_out_edge_dict = tls_logic.get_connection_to_turn_defs(net_file)
+    network_intersection_input_lane_to_out_edge_to_link_index_dict=intersection_topology_container\
+        ._network_intersection_input_lane_to_output_edge_to_link_index_dict
+
     # reordered to be in the same order as network_intersection_ids
     network_tls_in_lane_and_out_edge_to_queue_index = [
         link_index_by_tls_id_in_lane_and_out_edge_dict[intersection_id] for
         intersection_id in network_tls_ids]
 
+    network_intersection_in_lane_and_out_edge_to_queue_index = \
+        intersection_topology_container._network_intersection_input_lane_to_output_edge_to_link_index
+
     # Construct a dictionary which just gives {in_lane : {out_edge : link_index}}
     # link_index_by_intersection_id_in_lane_and_out_edge values as a list
-    in_lane_and_out_edge_to_queue_index_as_list = link_index_by_tls_id_in_lane_and_out_edge_dict.values()
+    tls_in_lane_and_out_edge_to_queue_index_as_list = link_index_by_tls_id_in_lane_and_out_edge_dict.values()
     # create a new dictionary which is a flattened version of link_index_by_intersection_id_in_lane_and_out_edge -> {in_lane : {out_edge : link_index}}
-    network_in_lane_and_out_edge_to_queue_index_dict = {}
+    network_tls_in_lane_and_out_edge_to_queue_index_dict = {}
     for tls_id in network_tls_ids:
-        network_in_lane_and_out_edge_to_queue_index_dict.update(link_index_by_tls_id_in_lane_and_out_edge_dict[tls_id])
+        network_tls_in_lane_and_out_edge_to_queue_index_dict.update(link_index_by_tls_id_in_lane_and_out_edge_dict[tls_id])
+
+    # Do the same for all intersections
+    intersection_in_lane_and_out_edge_to_queue_index_dicts_as_list = \
+        network_intersection_input_lane_to_out_edge_to_link_index_dict.values()
+
+    network_intersection_in_lane_and_out_edge_to_queue_index_dict = {}
+
+    for intersection_id in network_intersection_ids:
+        network_intersection_in_lane_and_out_edge_to_queue_index_dict.update(
+            network_intersection_input_lane_to_out_edge_to_link_index_dict[intersection_id])
 
     # number of queues at each intersection, ordered by network_intersection_ids
     network_tls_num_queue_indexes = [network._id2tls[id]._maxConnectionNo + 1 for id in network_tls_ids]
+    network_intersection_num_queue_indices = [len(list_of_lanes) for list_of_lanes in network_intersection_in_lanes_to_indices]
 
     # All lanes in the network
     network_lanes = [lane.getID() for intersection in network._nodes for edge in intersection.getIncoming() for lane
@@ -448,8 +484,8 @@ if __name__ == "__main__":
             network_intersection_first_cars_in_lanes, network_intersection_first_cars_out_lanes = \
                 get_network_intersection_first_car_in_lane_and_out_lane(network_tls_ids,
                                                                         network_intersection_first_cars_queue_indicies,
-                                                                        network_tls_in_lanes_to_indicies,
-                                                                        network_tls_out_lanes_to_indicies)
+                                                                        network_tls_in_lanes_to_indices,
+                                                                        network_tls_out_lanes_to_indices)
 
             # Convert the first cars in lane, the first cars out lanes, and the queues by lane into a calculation of
             # propagating pressures.
@@ -464,7 +500,7 @@ if __name__ == "__main__":
 
             # Get the queue length using the ranked queue length algorithm
             network_intersection_queues_by_link_index = get_queue_length_per_link_index_ranked(network_tls_in_lanes,
-                network_tls_num_queue_indexes, network_in_lane_and_out_edge_to_queue_index_dict)
+                                                                                               network_tls_num_queue_indexes, network_tls_in_lane_and_out_edge_to_queue_index_dict)
 
             # Add the propagating pressures to the ranked queue lengths
             network_intersection_queues_by_link_index_plus_force = add_force_to_queues(network_tls_ids,
@@ -472,7 +508,7 @@ if __name__ == "__main__":
 
             # Detect any lanes which are full
             network_intersection_full_out_lane = [[lane_free_detection(out_lane) for out_lane in intersection] for
-                                                  intersection in network_tls_out_lanes_to_indicies]
+                                                  intersection in network_tls_out_lanes_to_indices]
 
             # Recalculate compatible phases matrix to account for full out lanes (congestion aware traffic light
             # control)
