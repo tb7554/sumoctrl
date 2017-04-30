@@ -8,10 +8,9 @@ Module for running tests on the functions contained in this package.
 
 """
 
-import sys
+import os, sys
 from interface import getdata
 from runsim import launch_sumo_process, get_open_port
-
 
 import traci
 
