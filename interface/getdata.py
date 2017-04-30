@@ -44,14 +44,17 @@ class LaneSubscription(SumoSubscription):
     def __init__(self):
         SumoSubscription.__init__(self, 'lane')
 
-    def activate_subscription(self, subscribe_to, variable_ids=tuple([tc.LAST_STEP_VEHICLE_ID_LIST])):
+    def activate_subscription(self, subscribe_to='all', variable_ids=tuple([tc.LAST_STEP_VEHICLE_ID_LIST])):
 
         if type(variable_ids) != list:
             var_ids_as_tuple = tuple([variable_ids])
         else:
             var_ids_as_tuple = tuple(variable_ids)
 
-        self.subscription_function(subscribe_to, varIDs=var_ids_as_tuple)
+        if subscribe_to == 'all':
+            [self.subscription_function(lane, varIDs=var_ids_as_tuple) for lane in traci.lane.getIDList()]
+        else:
+            [self.subscription_function(lane, varIDs=var_ids_as_tuple) for lane in subscribe_to]
 
 class VehSubscription(SumoSubscription):
 
