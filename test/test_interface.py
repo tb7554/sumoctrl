@@ -8,9 +8,12 @@ Module for running tests on the functions contained in this package.
 
 """
 
-import os, sys
+import sys
 from interface import getdata
-from runsim import launch_sumo_process, get_open_port
+from utils import get_open_port, add_sumo_tools_to_path
+from runsim import launch_sumo_process
+
+add_sumo_tools_to_path()
 
 import traci
 
@@ -31,6 +34,9 @@ if __name__ == "__main__":
     while step == 0 or traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
         step += 0.1
+
+        lane_sub.update_subscription_with_sumo()
+        lane_results = lane_sub.retrieve_subscription_results()
 
     traci.close()
     sys.stdout.flush()
