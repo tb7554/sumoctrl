@@ -23,9 +23,10 @@ if __name__ == "__main__":
 
     sumo_config_file = 'test_scenario/test.sumocfg'
 
-    sumo_subprocess = launch_sumo_process(sumo_config_file, traci_port, sumo_binary="sumo", gui_on=False)
+    sumo_subprocess = launch_sumo_process(sumo_config_file, traci_port, sumo_binary="sumo-gui", gui_on=False)
 
     lane_sub = getdata.LaneSubscription()
+    lane_sub.activate_subscription()
 
     # initialise the step
     step = 0

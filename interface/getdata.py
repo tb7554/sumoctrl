@@ -1,14 +1,8 @@
 from __future__ import print_function, division
-import numpy as np
-import os, sys
 
-os.environ['SUMO_HOME'] = '/sumo'
+from utils import add_sumo_tools_to_path
 
-if 'SUMO_HOME' in os.environ:
-    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
-    sys.path.append(tools)
-else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
+add_sumo_tools_to_path()
 
 import traci
 import traci.constants as tc
