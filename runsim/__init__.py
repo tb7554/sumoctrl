@@ -30,14 +30,13 @@ def get_open_port():
     s.close()
     return port
 
-def launch_sumo_process(sumo_config_file, sumo_binary=os.environ["SUMO_BINARY"], gui_on=False):
+def launch_sumo_process(sumo_config_file, traci_port, sumo_binary="sumo", gui_on=False):
     """Takes a SUMO config file and optional path to the SUMO binary and optional argument to launch SUMO with a gui.
      Launches a SUMO simulation using the subprocess module with a free port open for TraCI. Returns the subprocess and
      traci port number"""
 
     if gui_on: sumo_binary += "-gui"  # Append the gui command if requested
 
-    traci_port = get_open_port()
     sumoCommand = ("%s -c %s --remote-port %d" % \
     (sumo_binary, sumo_config_file, traci_port))
 
@@ -48,5 +47,5 @@ def launch_sumo_process(sumo_config_file, sumo_binary=os.environ["SUMO_BINARY"],
     traci.init(traci_port)
     print("Port opened on %d" % traci_port)
 
-    return sumo_subprocess, traci_port
+    return sumo_subprocess
 

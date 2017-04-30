@@ -1,0 +1,36 @@
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo-sim.org/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="test.net.xml"/>
+        <route-files value="test.rou.xml"/>
+    </input>
+
+    <processing>
+        <ignore-junction-blocker value="20"/>
+        <time-to-teleport value="600"/>
+        <max-depart-delay value="600"/>
+    </processing>
+
+    <time>
+        <begin value="100"/>
+        <end value="600"/>
+        <step-length value="0.100000"/>
+    </time>
+
+    <output>
+        <tripinfo value="test-tripinfo.xml"/>
+        <summary value="test-summary.xml"/>
+        <vehroute-output value="test-route.rou.xml"/>
+        <vehroute-output.last-route value="true"/>
+        <vehroute-output.sorted value="true"/>
+    </output>
+
+    <emissions>
+        <device.emissions.probability value="1"/>
+    </emissions>
+
+    <report>
+        <verbose value="true"/>
+    </report>
+
+</configuration>
