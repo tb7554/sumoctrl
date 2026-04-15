@@ -1,9 +1,8 @@
 # #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
 """
-@file   intersections/sumo_intersection_interface.py
+@file   intersections/controlled_intersection_container.py
 @author  Tim Barker
-@date    06/03/2017
+@date    15/04/2026
 
 """
 
@@ -38,7 +37,7 @@ class BasicIntersectionContainer():
 
         all_lanes = []
 
-        for intersection in self._id2intersection.values()
+        for intersection in self._id2intersection.values():
             all_lanes.append(intersection._incoming_lanes)
             all_lanes.append(intersection._outgoing_lanes)
 

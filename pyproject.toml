@@ -1,0 +1,19 @@
+[project]
+name = "sumoctrl"
+version = "0.1.0"
+description = "SUMO extension library for intersection control and vehicle routing research"
+requires-python = ">=3.10"
+# Note: SUMO's `traci` and `sumolib` are intentionally NOT listed as
+# dependencies - they ship with SUMO itself and are picked up from
+# $SUMO_HOME/tools at runtime (see utils.add_sumo_tools_to_path).
+dependencies = [
+    "numpy",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"

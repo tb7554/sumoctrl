@@ -1,11 +1,27 @@
+# #!/usr/bin/env python
+"""
+@file   plot/__init__.py
+@author  Tim Barker
+@date    15/04/2026
+
+Matplotlib helpers for formatted publication plots.
+"""
+from typing import Sequence
+
 import matplotlib
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 
-def get_formatted_plot(fnum=None, fsize=(4,3), textsize=8, scale=0.55):
-    """Create a plot objected formatted in Times New Roman. Doesn't require arguments. 
-    Returns axis object but this is not necessary to assign to memory if you call the plot function
-    before calling this function again."""
 
+def get_formatted_plot(
+    fnum: int | None = None,
+    fsize: tuple[float, float] = (4, 3),
+    textsize: float = 8,
+    scale: float = 0.55,
+) -> Axes:
+    """Create a plot object formatted in Times New Roman. Doesn't require arguments.
+    Returns an Axes object but it is not necessary to assign to memory if you call the
+    plot function before calling this function again."""
 
     if fnum is not None:
         ax = plt.figure(num=fnum, figsize=fsize)
@@ -33,10 +49,16 @@ def get_formatted_plot(fnum=None, fsize=(4,3), textsize=8, scale=0.55):
 
     return ax
 
-def format_plot_axis(x_placement_range, x_label_range, y_placement_range, y_label_range):
+
+def format_plot_axis(
+    x_placement_range: Sequence[float],
+    x_label_range: Sequence[str],
+    y_placement_range: Sequence[float],
+    y_label_range: Sequence[str],
+) -> None:
     """Format plot axis ticks and number ranges. Arguments are lists identifying value at which to place a tick
     and the string/value to place there.
-    
+
     e.g. format_plot_axis( [locations to place labels on x-axis], [labels for x-axis],
                             [locations to place labels on y-axis], [labels for y-axis])"""
 

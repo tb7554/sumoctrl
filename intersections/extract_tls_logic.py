@@ -1,24 +1,17 @@
 # #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
 """
 @file   intersections/extract_tls_logic.py
 @author  Tim Barker
-@date    06/03/2017
+@date    15/04/2026
 
 Files for extracting the traffic light logic from the sumo net file. These can then be used by the intersection objects.
 
 """
-import os, sys
-
 import numpy as np
 
-os.environ['SUMO_HOME'] = '/sumo'
+from utils import add_sumo_tools_to_path
 
-if 'SUMO_HOME' in os.environ:
-    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
-    sys.path.append(tools)
-else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
+add_sumo_tools_to_path()
 
 from sumolib import net
 from collections import defaultdict
@@ -26,7 +19,7 @@ from collections import defaultdict
 class network_tls_logic():
     """Class to easily store tls logic extracted from the sumo net file."""
 
-    def __init__(self, net_file, giveway_value=1):
+    def __init__(self, net_file: str, giveway_value: float = 1) -> None:
 
         self._net_obj = net.readNet(net_file, withPrograms=True, withConnections=True)
 
@@ -37,13 +30,13 @@ class network_tls_logic():
 
         # Conversion to numpy arrays which will be more efficient (some users may prefer this implementation).
         # More likely to lead to mistakes, but also opens up options for using map and reduce.
-        self._tls_ids = self._tls_stages.keys()
+        self._tls_ids = list(self._tls_stages.keys())
         self._tls_stages_as_numpy_matrix = np.matrix([np.matrix(matrix) for matrix in self._tls_stages.values()])
         # As key -> val order may differ in the other dictionary, we iter through the self._tls_ids list for the second numpy matrix
         self._compatible_phases_as_numpy_matrix = np.matrix([np.matrix(self._compatible_phases[tls_id]) for tls_id in self._tls_ids])
 
 
-def stages_as_dict(net_obj, clean_stages=True):
+def stages_as_dict(net_obj, clean_stages: bool = True) -> dict[str, list]:
     """Takes a sumo net object and turns it into a dictionary {tls_id : stage settings as matrix}. The clean_stages
      option removes amber lights from all green stages and removes any 'all red' stages."""
 
@@ -67,7 +60,10 @@ def stages_as_dict(net_obj, clean_stages=True):
 
     return tls_stages
 
-def stages_to_compatible_phases_matrix(tls_stages, giveway_value=1):
+def stages_to_compatible_phases_matrix(
+    tls_stages: dict[str, list[list[str]]],
+    giveway_value: float = 1,
+) -> dict[str, list[list[float]]]:
     """Takes a dictionary of stage settings and returns a dictionary with matrices representing which phases (movements)
      are compatible for each stage. The giveway_value is a modifer for any compatible phase which must none-the-less
      giveway (e.g. right turn and straight are often compatible, but right turning drivers must giveway).

@@ -1,23 +1,21 @@
-# -*- coding: utf-8 -*-
-from __future__ import division
-import os, sys, subprocess
+"""
+@file   intersections/propogating_pressure_intersection_simulation.py
+@author  Tim Barker
+@date    15/04/2026
+
+Propagating-pressure max-pressure-style TLS controller. End-to-end runnable
+example; see the ``__main__`` block (currently gated, see FIXME there).
+"""
+import sys
+
 import numpy as np
 
-os.environ['SUMO_HOME'] = '/sumo'
+from utils import add_sumo_tools_to_path
 
-if 'SUMO_HOME' in os.environ:
-    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
-    sys.path.append(tools)
-else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
+add_sumo_tools_to_path()
 
-os.environ["SUMO_BINARY"] = "sumo-gui"
-
-from runsim import checkPorts
-import tls_logic
 import traci
 from sumolib import net
-from interface import getdata
 from intersections.extract_intersection_topology import IntersectionTopology
 
 from collections import defaultdict, Counter
@@ -140,7 +138,7 @@ def get_veh_link_index(lane_id, veh_id, link_index_by_in_lane_and_out_edge):
                     pass
             return [-1]
     else:
-        return [link_index_by_in_lane_and_out_edge[lane_id].values()[0]]
+        return [list(link_index_by_in_lane_and_out_edge[lane_id].values())[0]]
 
 def get_queue_indices_of_first_vehicles(network_intersection_lanes, network_intersection_first_cars, network_intersection_in_lane_and_out_edge_to_queue_index):
 
@@ -197,14 +195,14 @@ def queue_force_calculation(network_intersection_first_cars_in_lanes, network_in
 
     new_force = defaultdict(int)
 
-    for in_lane in in_lane_to_queues.keys():
+    for in_lane in in_lane_to_queues:
         lanes_checked = [in_lane]
         out_lane = in_lane_to_out_lane[in_lane]
         while out_lane not in lanes_checked:
             new_force[out_lane] += force[in_lane]
             lanes_checked.append(out_lane)
             new_in_lane = out_lane
-            if new_in_lane in in_lane_to_out_lane.keys():
+            if new_in_lane in in_lane_to_out_lane:
                 out_lane = in_lane_to_out_lane[new_in_lane]
             else:
                 break
@@ -237,7 +235,7 @@ def convert_force_to_junction_and_index_tuple(lane_to_force, network_intersectio
 
         for lane_index, lane_id in enumerate(network_intersection_first_cars_in_lanes[intersection_index]):
 
-                if lane_id in lane_to_force.keys():
+                if lane_id in lane_to_force:
                     force = lane_to_force[lane_id]
                     queue_index = network_intersection_first_cars_queue_indicies[intersection_index][lane_index]
                     if queue_index != None : junction_and_queue_index_and_force_tuples.append((intersection_id, queue_index, force))
@@ -282,7 +280,7 @@ def get_intersection_amber_phase_strings(old_phase, new_phase):
             elif old_phase[ii] == 'G' and new_phase[ii] == 'g':
                 amber_phase.append('G')
             else:
-                print("Something wrong in amber phase logic. Old: %s, New: %s" % (old_phase[ii], new_phase[ii]))
+                print("Something wrong in amber phase logic. Old: {}, New: {}".format(old_phase[ii], new_phase[ii]))
 
     intersection_amber_phase_as_string = "".join(amber_phase)
 
@@ -318,7 +316,7 @@ def get_network_intersection_amber_phase_strings(network_intersection_ids, netwo
                 elif old_phase[ii] == 'G' and new_phase[ii] == 'g':
                     amber_phase.append('G')
                 else:
-                    print("Something wrong in amber phase logic. Old: %s, New: %s" % (old_phase[ii], new_phase[ii]))
+                    print("Something wrong in amber phase logic. Old: {}, New: {}".format(old_phase[ii], new_phase[ii]))
 
         intersection_amber_phase_as_string = "".join(amber_phase)
 
@@ -337,6 +335,25 @@ def lane_free_detection(lane, full_indication_position=15, full_indication_speed
 
 if __name__ == "__main__":
 
+    # FIXME: this demo requires two things not present in the repository:
+    #   1. an external ``tls_logic`` module (not shipped with sumoctrl)
+    #   2. the hard-coded net/route files under /Users/tb7554/... from the
+    #      author's local machine
+    # The body below is preserved as working notes for a future rewrite.
+    # When the external tls_logic helper is reinstated and the scenario
+    # paths are parameterised, remove this sys.exit guard.
+    sys.exit(
+        "This __main__ demo is not runnable as committed: it imports an "
+        "external 'tls_logic' module and references local .net.xml / "
+        ".rou.xml files. See the FIXME comment above."
+    )
+
+    import os
+    import subprocess
+    from runsim import checkPorts  # noqa: F401  (not in repo; see FIXME)
+    import tls_logic  # noqa: F401  (not in repo; see FIXME)
+    from interface import getdata  # noqa: F401  (for future reintegration)
+
     os.environ['SUMO_HOME'] = "/sumo"
 
     end_step = 7200
@@ -353,9 +370,9 @@ if __name__ == "__main__":
     intersection_topology_container = IntersectionTopology(net_file)
 
     # List of ids of the tls intersections in the network
-    network_tls_ids = network._id2tls.keys()
+    network_tls_ids = list(network._id2tls.keys())
     # List of ids of all intersections in the network
-    network_intersection_ids = network._id2node.keys()
+    network_intersection_ids = list(network._id2node.keys())
     # nxn matrix of compatible phases, and phase strings. returned as dictionaries with intersection_ids as keys
     tls_compatible_phase_matrix, tls_stages = tls_logic.get_compatible_lanes_matrix_and_phases_from_net_file(net_file)
     # translate dicts into lists in order of network_intersection_ids
@@ -408,15 +425,15 @@ if __name__ == "__main__":
 
     # Construct a dictionary which just gives {in_lane : {out_edge : link_index}}
     # link_index_by_intersection_id_in_lane_and_out_edge values as a list
-    tls_in_lane_and_out_edge_to_queue_index_as_list = link_index_by_tls_id_in_lane_and_out_edge_dict.values()
+    tls_in_lane_and_out_edge_to_queue_index_as_list = list(link_index_by_tls_id_in_lane_and_out_edge_dict.values())
     # create a new dictionary which is a flattened version of link_index_by_intersection_id_in_lane_and_out_edge -> {in_lane : {out_edge : link_index}}
     network_tls_in_lane_and_out_edge_to_queue_index_dict = {}
     for tls_id in network_tls_ids:
         network_tls_in_lane_and_out_edge_to_queue_index_dict.update(link_index_by_tls_id_in_lane_and_out_edge_dict[tls_id])
 
     # Do the same for all intersections
-    intersection_in_lane_and_out_edge_to_queue_index_dicts_as_list = \
-        network_intersection_input_lane_to_out_edge_to_link_index_dict.values()
+    intersection_in_lane_and_out_edge_to_queue_index_dicts_as_list = list(
+        network_intersection_input_lane_to_out_edge_to_link_index_dict.values())
 
     network_intersection_in_lane_and_out_edge_to_queue_index_dict = {}
 
@@ -512,10 +529,10 @@ if __name__ == "__main__":
 
             # Recalculate compatible phases matrix to account for full out lanes (congestion aware traffic light
             # control)
-            resultant_phases = map(np.multiply, network_intersection_full_out_lane, network_tls_compatible_phases_matrix)
+            resultant_phases = list(map(np.multiply, network_intersection_full_out_lane, network_tls_compatible_phases_matrix))
 
             # Calculate total queue lengths for each stage using resultant phases calculation
-            total_queue_lengths = map(np.dot, resultant_phases, network_intersection_queues_by_link_index_plus_force)
+            total_queue_lengths = list(map(np.dot, resultant_phases, network_intersection_queues_by_link_index_plus_force))
             total_queue_lengths = [entry.tolist() for entry in total_queue_lengths]
 
             # Identify phase with max pressure for each tls intersection and change settings on traffic lights
@@ -528,12 +545,12 @@ if __name__ == "__main__":
             network_intersection_current_stage = [network_tls_stage_matrix[ii][max_entry] for ii, max_entry in enumerate(max_pressure_phase_index)]
 
             # Find the corresponding amber stage
-            network_intersection_amber_phase_strings = map(get_intersection_amber_phase_strings,
-                                                           network_intersection_previous_stage,
-                                                           network_intersection_current_stage)
+            network_intersection_amber_phase_strings = list(map(get_intersection_amber_phase_strings,
+                                                                network_intersection_previous_stage,
+                                                                network_intersection_current_stage))
 
             # Send new tls settings to SUMO via traci
-            [traci.trafficlights.setRedYellowGreenState(intersection_id, "".join(network_intersection_amber_phase_strings[intersection_index])) for
+            [traci.trafficlight.setRedYellowGreenState(intersection_id, "".join(network_intersection_amber_phase_strings[intersection_index])) for
              intersection_index, intersection_id in enumerate(network_tls_ids)]
 
             # Decremement counter and set stage to amber
@@ -548,7 +565,7 @@ if __name__ == "__main__":
 
         elif network_stage == "switch_amber_to_green":
 
-            [traci.trafficlights.setRedYellowGreenState(intersection_id, "".join(
+            [traci.trafficlight.setRedYellowGreenState(intersection_id, "".join(
                 network_intersection_current_stage[intersection_index])) for
              intersection_index, intersection_id in enumerate(network_tls_ids)]
 

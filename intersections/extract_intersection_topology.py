@@ -1,24 +1,19 @@
 # #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
 """
 @file   intersections/extract_intersection_topology.py
 @author  Tim Barker
-@date    24/03/2017
+@date    15/04/2026
 
 Files for extracting the traffic light logic from the sumo net file. These can then be used by the intersection objects.
 
 """
-import os, sys, copy
+import copy
 
 import numpy as np
 
-os.environ['SUMO_HOME'] = '/sumo'
+from utils import add_sumo_tools_to_path
 
-if 'SUMO_HOME' in os.environ:
-    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
-    sys.path.append(tools)
-else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
+add_sumo_tools_to_path()
 
 from sumolib import net
 from collections import defaultdict
@@ -33,7 +28,7 @@ class IntersectionTopology():
     """Container class for intersection topology. Intersection objects store topology for all intersections in 
         the network. tls objects store topology only for traffic light controlled intersections."""
 
-    def __init__(self, netfile_filepath):
+    def __init__(self, netfile_filepath: str) -> None:
         netobj = net.readNet(netfile_filepath, withPrograms=True, withConnections=True)
 
         self._network_intersection_ids = []
@@ -153,13 +148,13 @@ class IntersectionTopology():
             network_intersection_link_index_by_in_lane_and_out_edge[intersection_id]
             for intersection_id in self._network_intersection_ids]
 
-    def get_network_intersection_ids(self):
+    def get_network_intersection_ids(self) -> list[str]:
         return copy.deepcopy(self._network_intersection_ids)
 
-    def get_network_intersection_input_lanes(self):
+    def get_network_intersection_input_lanes(self) -> dict[str, list[str]]:
         return copy.deepcopy(self._network_intersection_input_lanes_to_indices_dict)
 
-    def get_network_intersection_output_lanes(self):
+    def get_network_intersection_output_lanes(self) -> dict[str, list[str]]:
         return copy.deepcopy(self._network_intersection_output_lanes_to_indices_dict)
 
 # Get all the incoming lanes of the intersection
